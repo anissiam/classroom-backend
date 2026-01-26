@@ -7,7 +7,9 @@ if (!process.env.DATABASE_URL) {
 }
 
 const sql = neon(process.env.DATABASE_URL);
-export const index = drizzle(sql);
+export const db = drizzle(sql);
 
 // For API compatibility with scripts that optionally close a pool.
 export const pool = undefined as unknown as { end: () => Promise<void> } | undefined;
+
+
