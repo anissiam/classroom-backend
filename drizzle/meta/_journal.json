@@ -8,6 +8,13 @@
       "when": 1769167024508,
       "tag": "0000_nebulous_omega_red",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1769687350257,
+      "tag": "0001_awesome_pestilence",
+      "breakpoints": true
     }
   ]
 }
