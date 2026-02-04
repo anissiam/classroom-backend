@@ -1,9 +1,11 @@
 import express from "express";
 import subjectsRouter from "./routes/subject";
+import usersRouter from "./routes/users";
 import cors from "cors";
 import securityMiddleware from "./middleware/security";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
+import classesRouter from "./routes/classes";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 8000;
@@ -24,7 +26,8 @@ app.use(express.json());
 app.use(securityMiddleware)
 
 app.use('/api/subjects', subjectsRouter)
-
+app.use('/api/users', usersRouter)
+app.use('/api/classes', classesRouter)
 // Root route
 app.get("/", (_req, res) => {
     res.json({message: "Classroom backend is up and running!"});
