@@ -4,6 +4,14 @@ import type { NextFunction, Request, Response } from "express";
 
 import aj from "../config/arcjet";
 
+// Helper to read integer env vars with default
+function envInt(name: string, def: number): number {
+    const v = process.env[name];
+    if (!v) return def;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : def;
+}
+
 const securityMiddleware = async (
     req: Request,
     res: Response,
@@ -14,27 +22,44 @@ const securityMiddleware = async (
         return next();
     }
 
+    // Optional bypass in development for easier local testing
+    if (process.env.NODE_ENV !== "production" && process.env.BYPASS_RATE_LIMIT === "true") {
+        return next();
+    }
+
     try {
         const role: RateLimitRole = req.user?.role ?? "guest";
+
+        // Base per-role limits (per minute), configurable via env vars
+        const adminBase = envInt("RATE_LIMIT_ADMIN", process.env.NODE_ENV === "production" ? 20 : 300);
+        const userBase = envInt("RATE_LIMIT_USER", process.env.NODE_ENV === "production" ? 10 : 120);
+        const guestBase = envInt("RATE_LIMIT_GUEST", process.env.NODE_ENV === "production" ? 5 : 60);
+
+        // Path-specific higher limit for subjects GETs (useful for UI pagination)
+        const subjectsGetLimit = envInt("RATE_LIMIT_SUBJECTS_GET", process.env.NODE_ENV === "production" ? 30 : 240);
 
         let limit: number;
         let message: string;
 
         switch (role) {
             case "admin":
-                limit = 20;
-                message = "Admin request limit exceeded (20 per minute). Slow down!";
+                limit = adminBase;
+                message = `Admin request limit exceeded (${adminBase} per minute). Slow down!`;
                 break;
             case "teacher":
             case "student":
-                limit = 10;
-                message = "User request limit exceeded (10 per minute). Please wait.";
+                limit = userBase;
+                message = `User request limit exceeded (${userBase} per minute). Please wait.`;
                 break;
             default:
-                limit = 5;
-                message =
-                    "Guest request limit exceeded (5 per minute). Please sign up for higher limits.";
+                limit = guestBase;
+                message = `Guest request limit exceeded (${guestBase} per minute). Please sign up for higher limits.`;
                 break;
+        }
+
+        // If this is a GET to /api/subjects, allow a higher cap
+        if (req.method === "GET" && req.path.startsWith("/api/subjects")) {
+            limit = Math.max(limit, subjectsGetLimit);
         }
 
         const client = aj.withRule(
