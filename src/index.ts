@@ -19,6 +19,20 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
 }));
+
+// Dev-only: if Origin header is missing/null on auth routes, set it to FRONTEND_URL
+if (process.env.NODE_ENV !== 'production') {
+    app.use((req, _res, next) => {
+        if (req.path.startsWith('/api/auth/')) {
+            const origin = req.headers.origin as string | undefined;
+            if (!origin || origin === 'null') {
+                req.headers.origin = FRONTEND_URL;
+            }
+        }
+        next();
+    });
+}
+
 app.all('/api/auth/*splat', toNodeHandler(auth));
 // JSON middleware
 app.use(express.json());
