@@ -37,9 +37,14 @@ if (process.env.NODE_ENV !== 'production') {
 
 app.all('/api/auth/*splat', toNodeHandler(auth));
 // JSON middleware
+import authMiddleware from "./middleware/auth";
+
+// ... existing code ...
+
 app.use(express.json());
 
-app.use(securityMiddleware)
+app.use(authMiddleware);
+app.use(securityMiddleware);
 
 app.use('/api/subjects', subjectsRouter)
 app.use('/api/users', usersRouter)
@@ -49,7 +54,7 @@ app.use("/api/stats", statsRouter);
 app.use("/api/enrollments", enrollmentsRouter);
 // Root route
 app.get("/", (_req, res) => {
-    res.json({message: "Classroom backend is up and running!"});
+    res.json({ message: "Classroom backend is up and running!" });
 });
 
 // Start server

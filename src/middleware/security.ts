@@ -3,6 +3,7 @@ import type { ArcjetNodeRequest } from "@arcjet/node";
 import type { NextFunction, Request, Response } from "express";
 
 import aj from "../config/arcjet.js";
+import { log } from "node:console";
 
 const securityMiddleware = async (
     req: Request,
@@ -13,27 +14,26 @@ const securityMiddleware = async (
     if (process.env.NODE_ENV === "test") {
         return next();
     }
-
     try {
         const role: RateLimitRole = req.user?.role ?? "guest";
-
+        console.log(role, "role")
         let limit: number;
         let message: string;
 
         switch (role) {
             case "admin":
-                limit = 20;
+                limit = 100;
                 message = "Admin request limit exceeded (20 per minute). Slow down!";
                 break;
             case "teacher":
             case "student":
-                limit = 10;
+                limit = 70;
                 message = "User request limit exceeded (10 per minute). Please wait.";
                 break;
             default:
-                limit = 5;
+                limit = 60;
                 message =
-                    "Guest request limit exceeded (5 per minute). Please sign up for higher limits.";
+                    "Guest request limit exceeded (60 per minute). Please sign up for higher limits.";
                 break;
         }
 
